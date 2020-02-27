@@ -8,13 +8,13 @@ import (
 
 type RestErr interface {
 	Error() bool
-	StatusCode() int64
+	StatusCode() int
 	Message() string
 }
 
 type restErr struct {
 	ErrError      bool   `json:"error"`
-	ErrStatusCode int64  `json:"status_code"`
+	ErrStatusCode int    `json:"status_code"`
 	ErrMessage    string `json:"message"`
 }
 
@@ -22,7 +22,7 @@ func (e restErr) Error() bool {
 	return e.ErrError
 }
 
-func (e restErr) StatusCode() int64 {
+func (e restErr) StatusCode() int {
 	return e.ErrStatusCode
 }
 
@@ -30,7 +30,7 @@ func (e restErr) Message() string {
 	return e.ErrMessage
 }
 
-func NewRestError(status int64, message string) RestErr {
+func NewRestError(status int, message string) RestErr {
 	return restErr{
 		ErrError:      true,
 		ErrStatusCode: status,
