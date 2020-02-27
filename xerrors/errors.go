@@ -8,29 +8,29 @@ import (
 
 type RestErr interface {
 	Error() bool
-	StatusCode() int
+	StatusCode() int64
 	Message() string
 }
 
-type restErr struct{
-	ErrError bool `json:"error"`
-	ErrStatusCode int `json:"status_code"`
-	ErrMessage string `json:"message"`
+type restErr struct {
+	ErrError      bool   `json:"error"`
+	ErrStatusCode int64  `json:"status_code"`
+	ErrMessage    string `json:"message"`
 }
 
-func(e restErr) Error() bool{
+func (e restErr) Error() bool {
 	return e.ErrError
 }
 
-func(e restErr) StatusCode() int {
+func (e restErr) StatusCode() int64 {
 	return e.ErrStatusCode
 }
 
-func(e restErr) Message() string{
+func (e restErr) Message() string {
 	return e.ErrMessage
 }
 
-func NewRestError(status int, message string) RestErr{
+func NewRestError(status int64, message string) RestErr {
 	return restErr{
 		ErrError:      true,
 		ErrStatusCode: status,
@@ -38,7 +38,7 @@ func NewRestError(status int, message string) RestErr{
 	}
 }
 
-func NewRestErrorFromBytes(bytes []byte) (RestErr, error){
+func NewRestErrorFromBytes(bytes []byte) (RestErr, error) {
 	var apiErr restErr
 	if err := json.Unmarshal(bytes, &apiErr); err != nil {
 		return nil, errors.New("invalid error json response")
@@ -46,7 +46,7 @@ func NewRestErrorFromBytes(bytes []byte) (RestErr, error){
 	return apiErr, nil
 }
 
-func NewBadRequestError(message string) RestErr{
+func NewBadRequestError(message string) RestErr {
 	return restErr{
 		ErrError:      true,
 		ErrStatusCode: http.StatusBadRequest,
@@ -54,7 +54,7 @@ func NewBadRequestError(message string) RestErr{
 	}
 }
 
-func NewNotFoundError(message string) RestErr{
+func NewNotFoundError(message string) RestErr {
 	return restErr{
 		ErrError:      true,
 		ErrStatusCode: http.StatusNotFound,
@@ -62,7 +62,7 @@ func NewNotFoundError(message string) RestErr{
 	}
 }
 
-func NewUnauthorizedError(message string) RestErr{
+func NewUnauthorizedError(message string) RestErr {
 	return restErr{
 		ErrError:      true,
 		ErrStatusCode: http.StatusUnauthorized,
@@ -70,11 +70,10 @@ func NewUnauthorizedError(message string) RestErr{
 	}
 }
 
-func NewInternalServerError(message string) RestErr{
+func NewInternalServerError(message string) RestErr {
 	return restErr{
 		ErrError:      true,
 		ErrStatusCode: http.StatusInternalServerError,
 		ErrMessage:    message,
 	}
 }
-
