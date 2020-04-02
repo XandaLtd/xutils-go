@@ -47,20 +47,20 @@ func AddMock(mock Mock) {
 	mocks[getMockID(mock.HTTPMethod, mock.URL)] = &mock
 }
 
-// Post execute a post request to a given URL with the body
-func Post(url string, body interface{}, headers http.Header) (*http.Response, error) {
+// MakeRequest execute a request to a given URL with the body
+func MakeRequest(method string, url string, body interface{}, headers http.Header) (*http.Response, error) {
 	var jsonBytes []byte
 	var err error
 
 	if enabledMocks {
-		mock := mocks[getMockID(http.MethodPost, url)]
+		mock := mocks[getMockID(method, url)]
 		if mock != nil {
 			return nil, errors.New("no mock found for given request")
 		}
 		return mock.Response, mock.Err
 	}
 
-	//// Check if the body is already a string (Eg. JSON string)
+	// Check if the body is already a string (Eg. JSON string)
 	if w, ok := body.(string); ok {
 		jsonBytes = []byte(w)
 	} else {
@@ -70,7 +70,7 @@ func Post(url string, body interface{}, headers http.Header) (*http.Response, er
 			return nil, err
 		}
 	}
-	request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(jsonBytes))
+	request, err := http.NewRequest(method, url, bytes.NewReader(jsonBytes))
 	if err != nil {
 		return nil, err
 	}
