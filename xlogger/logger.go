@@ -52,8 +52,14 @@ func getLevel() zapcore.Level {
 		return zap.DebugLevel
 	case "info":
 		return zap.InfoLevel
+	case "warn":
+		return zap.WarnLevel
 	case "error":
 		return zap.ErrorLevel
+	case "panic":
+		return zap.PanicLevel
+	case "fatal":
+		return zap.FatalLevel
 	default:
 		return zap.InfoLevel
 	}
@@ -83,13 +89,43 @@ func (l logger) Printf(format string, v ...interface{}) {
 	}
 }
 
-func Info(msg string, tags ...zap.Field) {
-	log.log.Info(msg, tags...)
-	log.log.Sync()
+// Debug logs are typically voluminous, and are usually disabled in production
+func Debug(msg string, tags ...zap.Field) {
+	log.log.Debug(msg, tags...)
+	_ = log.log.Sync()
 }
 
+// Info is the default logging priority.
+func Info(msg string, tags ...zap.Field) {
+	log.log.Info(msg, tags...)
+	_ = log.log.Sync()
+}
+
+// Warning logs are more important than Info, but don't need individual
+// human review.
+func Warning(msg string, tags ...zap.Field) {
+	log.log.Debug(msg, tags...)
+	_ = log.log.Sync()
+}
+
+// Error logs are high-priority. If an application is running smoothly,
+// it shouldn't generate any error-level logs.
 func Error(msg string, err error, tags ...zap.Field) {
 	tags = append(tags, zap.NamedError("error", err))
 	log.log.Error(msg, tags...)
-	log.log.Sync()
+	_ = log.log.Sync()
+}
+
+// Panic logs a message, then panics.
+func Panic(msg string, err error, tags ...zap.Field) {
+	tags = append(tags, zap.NamedError("error", err))
+	log.log.Panic(msg, tags...)
+	_ = log.log.Sync()
+}
+
+// Fatal logs a message, then calls os.Exit(1).
+func Fatal(msg string, err error, tags ...zap.Field) {
+	tags = append(tags, zap.NamedError("error", err))
+	log.log.Fatal(msg, tags...)
+	_ = log.log.Sync()
 }
