@@ -2,33 +2,45 @@ package xlogger
 
 import (
 	"fmt"
-	"os"
-	"strings"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-const (
-	envLogLevel  = "LOG_LEVEL"
-	envLogOutput = "LOG_OUTPUT"
+type Level = string
+
+const  (
+	DebugLevel Level = "debug"
+	InfoLevel Level = "info"
 )
 
-var log logger
-
-type restLogger interface {
+type Logger interface {
 	Print(v ...interface{})
 	Printf(format string, v ...interface{})
 }
 
-type logger struct {
+type DefaultLogger struct {
 	log *zap.Logger
 }
 
-func init() {
+type Config struct	{
+	LogOutputTo []string
+	LoggErrsTo []string
+}
+
+func NewLogger(level Level, config Config) (Logger, error) {
+	if config.LogOutputTo == nil || len(config.LogOutputTo) == 0 {
+		config.LogOutputTo = []string{"stdout"}
+	}
+
+	if config.LoggErrsTo == nil || len(config.LoggErrsTo) == 0 {
+		config.LogOutputTo = []string{"stderr"}
+	}
+
 	logConfig := zap.Config{
-		OutputPaths: []string{getOutput()},
-		Level:       zap.NewAtomicLevelAt(getLevel()),
+		OutputPaths: config.LogOutputTo,
+		ErrorOutputPaths: config.LoggErrsTo,
+		Level:       zap.NewAtomicLevelAt(getLevel(level)),
 		Encoding:    "json",
 		EncoderConfig: zapcore.EncoderConfig{
 			LevelKey:     "level",
@@ -40,14 +52,19 @@ func init() {
 		},
 	}
 
-	var err error
-	if log.log, err = logConfig.Build(); err != nil {
-		panic(err)
+	logger := &DefaultLogger{}
+
+	internalLogger, err := logConfig.Build()
+	if err != nil {
+		return nil, fmt.Errorf("error setting up default logger - %w", err)
 	}
+
+	logger.log = internalLogger
+	return logger, nil
 }
 
-func getLevel() zapcore.Level {
-	switch strings.ToLower(strings.TrimSpace(os.Getenv(envLogLevel))) {
+func getLevel(level Level) zapcore.Level {
+	switch string(level) {
 	case "debug":
 		return zap.DebugLevel
 	case "info":
@@ -65,67 +82,49 @@ func getLevel() zapcore.Level {
 	}
 }
 
-func getOutput() string {
-	output := strings.TrimSpace(os.Getenv(envLogOutput))
-	if output == "" {
-		return "stdout"
-	}
-	return output
+func (l *DefaultLogger) Print(v ...interface{}) {
+	l.Info(fmt.Sprintf("%v", v))
 }
 
-func GetLogger() restLogger {
-	return log
-}
-
-func (l logger) Print(v ...interface{}) {
-	Info(fmt.Sprintf("%v", v))
-}
-
-func (l logger) Printf(format string, v ...interface{}) {
+func (l *DefaultLogger) Printf(format string, v ...interface{}) {
 	if len(v) == 0 {
-		Info(format)
+		l.Info(format)
 	} else {
-		Info(fmt.Sprintf(format, v...))
+		l.Info(fmt.Sprintf(format, v...))
 	}
 }
 
 // Debug logs are typically voluminous, and are usually disabled in production
-func Debug(msg string, tags ...zap.Field) {
-	log.log.Debug(msg, tags...)
-	_ = log.log.Sync()
+func (l *DefaultLogger)Debug(msg string, tags ...zap.Field) {
+	l.log.Debug(msg, tags...)
 }
 
 // Info is the default logging priority.
-func Info(msg string, tags ...zap.Field) {
-	log.log.Info(msg, tags...)
-	_ = log.log.Sync()
+func (l *DefaultLogger) Info(msg string, tags ...zap.Field) {
+	l.log.Info(msg, tags...)
 }
 
 // Warning logs are more important than Info, but don't need individual
 // human review.
-func Warning(msg string, tags ...zap.Field) {
-	log.log.Debug(msg, tags...)
-	_ = log.log.Sync()
+func (l *DefaultLogger)Warning(msg string, tags ...zap.Field) {
+	l.log.Debug(msg, tags...)
 }
 
 // Error logs are high-priority. If an application is running smoothly,
 // it shouldn't generate any error-level logs.
-func Error(msg string, err error, tags ...zap.Field) {
+func (l *DefaultLogger)Error(msg string, err error, tags ...zap.Field) {
 	tags = append(tags, zap.NamedError("error", err))
-	log.log.Error(msg, tags...)
-	_ = log.log.Sync()
+	l.log.Error(msg, tags...)
 }
 
 // Panic logs a message, then panics.
-func Panic(msg string, err error, tags ...zap.Field) {
+func (l *DefaultLogger)Panic(msg string, err error, tags ...zap.Field) {
 	tags = append(tags, zap.NamedError("error", err))
-	log.log.Panic(msg, tags...)
-	_ = log.log.Sync()
+	l.log.Panic(msg, tags...)
 }
 
 // Fatal logs a message, then calls os.Exit(1).
-func Fatal(msg string, err error, tags ...zap.Field) {
+func(l *DefaultLogger) Fatal(msg string, err error, tags ...zap.Field) {
 	tags = append(tags, zap.NamedError("error", err))
-	log.log.Fatal(msg, tags...)
-	_ = log.log.Sync()
+	l.log.Fatal(msg, tags...)
 }
