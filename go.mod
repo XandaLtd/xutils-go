@@ -1,4 +1,4 @@
-module github.com/XandaLtd/xutils-go
+module github.com/AlchemyTelcoSolutions/xutils-go
 
 go 1.13
 
