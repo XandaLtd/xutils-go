@@ -9,9 +9,9 @@ import (
 
 type Level = string
 
-const  (
+const (
 	DebugLevel Level = "debug"
-	InfoLevel Level = "info"
+	InfoLevel  Level = "info"
 )
 
 type Logger interface {
@@ -23,9 +23,9 @@ type DefaultLogger struct {
 	log *zap.Logger
 }
 
-type Config struct	{
+type Config struct {
 	LogOutputTo []string
-	LoggErrsTo []string
+	LoggErrsTo  []string
 }
 
 func NewLogger(level Level, config Config) (Logger, error) {
@@ -34,14 +34,14 @@ func NewLogger(level Level, config Config) (Logger, error) {
 	}
 
 	if config.LoggErrsTo == nil || len(config.LoggErrsTo) == 0 {
-		config.LogOutputTo = []string{"stderr"}
+		config.LoggErrsTo = []string{"stderr"}
 	}
 
 	logConfig := zap.Config{
-		OutputPaths: config.LogOutputTo,
+		OutputPaths:      config.LogOutputTo,
 		ErrorOutputPaths: config.LoggErrsTo,
-		Level:       zap.NewAtomicLevelAt(getLevel(level)),
-		Encoding:    "json",
+		Level:            zap.NewAtomicLevelAt(getLevel(level)),
+		Encoding:         "json",
 		EncoderConfig: zapcore.EncoderConfig{
 			LevelKey:     "level",
 			TimeKey:      "time",
@@ -95,7 +95,7 @@ func (l *DefaultLogger) Printf(format string, v ...interface{}) {
 }
 
 // Debug logs are typically voluminous, and are usually disabled in production
-func (l *DefaultLogger)Debug(msg string, tags ...zap.Field) {
+func (l *DefaultLogger) Debug(msg string, tags ...zap.Field) {
 	l.log.Debug(msg, tags...)
 }
 
@@ -106,25 +106,25 @@ func (l *DefaultLogger) Info(msg string, tags ...zap.Field) {
 
 // Warning logs are more important than Info, but don't need individual
 // human review.
-func (l *DefaultLogger)Warning(msg string, tags ...zap.Field) {
+func (l *DefaultLogger) Warning(msg string, tags ...zap.Field) {
 	l.log.Debug(msg, tags...)
 }
 
 // Error logs are high-priority. If an application is running smoothly,
 // it shouldn't generate any error-level logs.
-func (l *DefaultLogger)Error(msg string, err error, tags ...zap.Field) {
+func (l *DefaultLogger) Error(msg string, err error, tags ...zap.Field) {
 	tags = append(tags, zap.NamedError("error", err))
 	l.log.Error(msg, tags...)
 }
 
 // Panic logs a message, then panics.
-func (l *DefaultLogger)Panic(msg string, err error, tags ...zap.Field) {
+func (l *DefaultLogger) Panic(msg string, err error, tags ...zap.Field) {
 	tags = append(tags, zap.NamedError("error", err))
 	l.log.Panic(msg, tags...)
 }
 
 // Fatal logs a message, then calls os.Exit(1).
-func(l *DefaultLogger) Fatal(msg string, err error, tags ...zap.Field) {
+func (l *DefaultLogger) Fatal(msg string, err error, tags ...zap.Field) {
 	tags = append(tags, zap.NamedError("error", err))
 	l.log.Fatal(msg, tags...)
 }
