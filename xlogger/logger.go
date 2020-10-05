@@ -23,6 +23,9 @@ type DefaultLogger struct {
 	log *zap.Logger
 }
 
+// NoOpLogger logs nothing
+type NoOpLogger struct{}
+
 type Config struct {
 	LogOutputTo []string
 	LoggErrsTo  []string
@@ -128,3 +131,7 @@ func (l *DefaultLogger) Fatal(msg string, err error, tags ...zap.Field) {
 	tags = append(tags, zap.NamedError("error", err))
 	l.log.Fatal(msg, tags...)
 }
+
+func (n NoOpLogger) Print(v ...interface{}) {}
+
+func (n NoOpLogger) Printf(format string, v ...interface{}) {}
