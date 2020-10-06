@@ -10,13 +10,21 @@ import (
 type Level = string
 
 const (
-	DebugLevel Level = "debug"
-	InfoLevel  Level = "info"
+	DebugLevel   Level = "debug"
+	InfoLevel    Level = "info"
+	WarningLevel Level = "warning"
+	ErrorLevel   Level = "error"
 )
 
 type Logger interface {
 	Print(v ...interface{})
 	Printf(format string, v ...interface{})
+	Debug(msg string, tags ...zap.Field)
+	Info(msg string, tags ...zap.Field)
+	Warning(msg string, tags ...zap.Field)
+	Error(msg string, err error, tags ...zap.Field)
+	Panic(msg string, err error, tags ...zap.Field)
+	Fatal(msg string, err error, tags ...zap.Field)
 }
 
 type DefaultLogger struct {
@@ -85,10 +93,12 @@ func getLevel(level Level) zapcore.Level {
 	}
 }
 
+// Print prints an info level log
 func (l *DefaultLogger) Print(v ...interface{}) {
 	l.Info(fmt.Sprintf("%v", v))
 }
 
+// Printf prints a formatted info level log
 func (l *DefaultLogger) Printf(format string, v ...interface{}) {
 	if len(v) == 0 {
 		l.Info(format)
@@ -132,6 +142,26 @@ func (l *DefaultLogger) Fatal(msg string, err error, tags ...zap.Field) {
 	l.log.Fatal(msg, tags...)
 }
 
+// Print NoOp
 func (n NoOpLogger) Print(v ...interface{}) {}
 
+// Printf NoOp
 func (n NoOpLogger) Printf(format string, v ...interface{}) {}
+
+// Debug NoOp
+func (n NoOpLogger) Debug(msg string, tags ...zap.Field) {}
+
+// Info NoOp
+func (n NoOpLogger) Info(msg string, tags ...zap.Field) {}
+
+// Warning NoOp
+func (n NoOpLogger) Warning(msg string, tags ...zap.Field) {}
+
+// Error NoOp
+func (n NoOpLogger) Error(msg string, err error, tags ...zap.Field) {}
+
+// Panic NoOp
+func (n NoOpLogger) Panic(msg string, err error, tags ...zap.Field) {}
+
+// Fatal NoOp
+func (n NoOpLogger) Fatal(msg string, err error, tags ...zap.Field) {}
