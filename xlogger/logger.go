@@ -104,7 +104,7 @@ func Info(msg string, tags ...zap.Field) {
 // Warning logs are more important than Info, but don't need individual
 // human review.
 func Warning(msg string, tags ...zap.Field) {
-	log.log.Debug(msg, tags...)
+	log.log.Warn(msg, tags...)
 	_ = log.log.Sync()
 }
 
