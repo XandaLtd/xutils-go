@@ -39,7 +39,9 @@ type Config struct {
 	LoggErrsTo  []string
 }
 
-func NewLogger(level Level, config Config) (Logger, error) {
+// NewLogger creates a new logger which logs to the sink(s) specified in config
+// and provides structured logging for the metadata
+func NewLogger(level Level, config Config, withMeta map[string]interface{}) (Logger, error) {
 	if config.LogOutputTo == nil || len(config.LogOutputTo) == 0 {
 		config.LogOutputTo = []string{"stdout"}
 	}
@@ -61,6 +63,7 @@ func NewLogger(level Level, config Config) (Logger, error) {
 			EncodeLevel:  zapcore.LowercaseLevelEncoder,
 			EncodeCaller: zapcore.ShortCallerEncoder,
 		},
+		InitialFields: withMeta,
 	}
 
 	logger := &DefaultLogger{}
@@ -75,7 +78,7 @@ func NewLogger(level Level, config Config) (Logger, error) {
 }
 
 func getLevel(level Level) zapcore.Level {
-	switch string(level) {
+	switch level {
 	case "debug":
 		return zap.DebugLevel
 	case "info":
@@ -140,6 +143,17 @@ func (l *DefaultLogger) Panic(msg string, err error, tags ...zap.Field) {
 func (l *DefaultLogger) Fatal(msg string, err error, tags ...zap.Field) {
 	tags = append(tags, zap.NamedError("error", err))
 	l.log.Fatal(msg, tags...)
+}
+
+// ChildLoggerWithFields returns a new logger with specified structured fields
+// The child logger has no impact on the parent nor the parent on the child
+func (l *DefaultLogger) ChildLoggerWithFields(fields map[string]interface{}) Logger {
+	var zapFields []zap.Field
+	for k, v := range fields {
+		zapFields = append(zapFields, zap.Any(k, v))
+	}
+
+	return &DefaultLogger{log: l.log.With(zapFields...)}
 }
 
 // Print NoOp
