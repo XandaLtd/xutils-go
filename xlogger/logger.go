@@ -156,6 +156,11 @@ func (l *DefaultLogger) ChildLoggerWithFields(fields map[string]interface{}) Log
 	return &DefaultLogger{log: l.log.With(zapFields...)}
 }
 
+// Unwrap returns the underlying zap logger
+func (l *DefaultLogger) Unwrap() *zap.Logger {
+	return l.log
+}
+
 // Print NoOp
 func (n NoOpLogger) Print(v ...interface{}) {}
 
