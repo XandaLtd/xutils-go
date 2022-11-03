@@ -19,6 +19,7 @@ const (
 type Logger interface {
 	Print(v ...interface{})
 	Printf(format string, v ...interface{})
+	With(fields ...zap.Field) Logger
 	Debug(msg string, tags ...zap.Field)
 	Info(msg string, tags ...zap.Field)
 	Warning(msg string, tags ...zap.Field)
@@ -110,6 +111,12 @@ func (l *DefaultLogger) Printf(format string, v ...interface{}) {
 	}
 }
 
+// With returns the logger with appended fields
+func (l *DefaultLogger) With(fields ...zap.Field) Logger {
+	l.log = l.log.With(fields...)
+	return l
+}
+
 // Debug logs are typically voluminous, and are usually disabled in production
 func (l *DefaultLogger) Debug(msg string, tags ...zap.Field) {
 	l.log.Debug(msg, tags...)
@@ -166,6 +173,9 @@ func (n NoOpLogger) Print(v ...interface{}) {}
 
 // Printf NoOp
 func (n NoOpLogger) Printf(format string, v ...interface{}) {}
+
+// With NoOp
+func (n NoOpLogger) With(fields ...zap.Field) Logger { return n }
 
 // Debug NoOp
 func (n NoOpLogger) Debug(msg string, tags ...zap.Field) {}
